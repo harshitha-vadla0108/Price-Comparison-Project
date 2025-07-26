@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Price Comparison Tool</title>
+    <style>
+        :root {
+            --primary: #047bd5;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #f5f7fa;
+            --dark: #2c3e50;
+            --white: #ffffff;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+        
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        #product-input {
+            padding: 12px 15px;
+            width: 60%;
+            min-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        #product-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(4, 123, 213, 0.2);
+        }
+        
+        #search-btn {
+            padding: 12px 25px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #search-btn:hover {
+            background-color: #0368b3;
+            transform: translateY(-2px);
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .result-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            border-top: 4px solid;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .site-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .site-logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-name {
+            font-weight: 600;
+            margin: 10px 0;
+            color: var(--dark);
+            min-height: 60px;
+            flex-grow: 1;
+        }
+        
+        .price-container {
+            margin: 15px 0;
+        }
+        
+        .current-price {
+            color: var(--success);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-left: 8px;
+        }
+        
+        .discount-badge {
+            display: inline-block;
+            background-color: var(--danger);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+        
+        .rating {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            color: var(--warning);
+            font-weight: bold;
+        }
+        
+        .stars {
+            color: var(--warning);
+            margin-right: 5px;
+        }
+        
+        .reviews {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-left: 5px;
+        }
+        
+        .visit-btn {
+            display: inline-block;
+            padding: 12px 15px;
+            background-color: var(--dark);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+            font-weight: 600;
+            margin-top: auto;
+        }
+        
+        .visit-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .error {
+            color: var(--danger);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+        }
+        
+        /* Platform-specific colors */
+        .amazon { border-color: #ff9900; }
+        .flipkart { border-color: #047bd5; }
+        .ebay { border-color: #0064d2; }
+        .meesho { border-color: #f43397; }
+        .myntra { border-color: #ff3f6c; }
+        .croma { border-color: #00a9e0; }
+        
+        .amazon .visit-btn { background-color: #ff9900; }
+        .flipkart .visit-btn { background-color: #047bd5; }
+        .ebay .visit-btn { background-color: #0064d2; }
+        .meesho .visit-btn { background-color: #f43397; }
+        .myntra .visit-btn { background-color: #ff3f6c; }
+        .croma .visit-btn { background-color: #00a9e0; }
+        
+        .loading {
+            text-align: center;
+            margin: 40px 0;
+            grid-column: 1/-1;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(4, 123, 213, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .best-deal-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--success);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 1;
+        }
+        
+        .retry-btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .retry-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            #product-input {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            #search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🛒 Smart Price Comparison Tool</h1>
+        <p class="subtitle">Compare prices across top online stores in India</p>
+    </header>
+    
+    <div class="search-container">
+        <input type="text" id="product-input" placeholder="Search for products (e.g., iPhone 15, Nike shoes)">
+        <button id="search-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+            Compare Prices
+        </button>
+    </div>
+    
+    <div id="results-container" class="results-container"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('search-btn').addEventListener('click', comparePrices);
+            document.getElementById('product-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('search-btn').click();
+                }
+            });
+        });
+        
+        async function comparePrices() {
+            const product = document.getElementById('product-input').value.trim();
+            if (!product) {
+                showError("Please enter a product name to search");
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Searching for "${product}" across stores...</p>
+                </div>
+            `;
+            
+            try {
+                const results = await Promise.all([
+                    fetchProduct('amazon', product),
+                    fetchProduct('flipkart', product),
+                    fetchProduct('ebay', product),
+                    fetchProduct('meesho', product),
+                    fetchProduct('myntra', product)
+                
+                ]);
+                
+                displayResults({
+                    amazon: results[0],
+                    flipkart: results[1],
+                    ebay: results[2],
+                    meesho: results[3],
+                    myntra: results[4]
+                
+                }, product);
+            } catch (error) {
+                showError(`Error: ${error.message}. Please try again.`);
+            }
+        }
+        
+        function displayResults(results, product) {
+            const resultsContainer = document.getElementById('results-container');
+            
+            const validResults = Object.values(results).filter(r => !r.error && r.priceValue);
+            let bestDeal = null;
+            if (validResults.length > 0) {
+                bestDeal = validResults.reduce((min, result) => 
+                    result.priceValue < min.priceValue ? result : min
+                );
+            }
+            
+            resultsContainer.innerHTML = `
+                <h2 style="grid-column: 1/-1; margin-bottom: 10px;">Results for "${product}"</h2>
+                <p style="grid-column: 1/-1; color: #666; margin-bottom: 20px;">
+                    Found ${validResults.length} stores with matching products
+                </p>
+                ${generateResultCard('amazon', results.amazon, bestDeal)}
+                ${generateResultCard('flipkart', results.flipkart, bestDeal)}
+                ${generateResultCard('ebay', results.ebay, bestDeal)}
+                ${generateResultCard('meesho', results.meesho, bestDeal)}
+                ${generateResultCard('myntra', results.myntra, bestDeal)}
+            `;
+        }
+        
+        function generateResultCard(site, data, bestDeal) {
+            const siteInfo = {
+                amazon: { name: 'Amazon' },
+                flipkart: { name: 'Flipkart' },
+                ebay: { name: 'eBay' },
+                meesho: { name: 'Meesho' },
+                myntra: { name: 'Myntra' }
+            };
+            
+            if (data.error) {
+                return `
+                    <div class="result-card ${site}">
+                        <div class="site-header">
+                            <img src="${getLogoPath(site)}" alt="${site}" class="site-logo">
+                            <h3>${siteInfo[site].name}</h3>
+                        </div>
+                        <p class="error">${data.error}</p>
+                        <button class="retry-btn" onclick="retryFetch('${site}')">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+            
+            const isBestDeal = bestDeal && data.priceValue === bestDeal.priceValue;
+            
+            return `
+                <div class="result-card ${site}" style="position: relative;">
+                    ${isBestDeal ? '<span class="best-deal-tag">Best Deal</span>' : ''}
+                    <div class="site-header">
+                        <img src="${getLogoPath(site)}" alt="${site}" class="site-logo">
+                        <h3>${siteInfo[site].name}</h3>
+                    </div>
+                    <p class="product-name">${data.name}</p>
+                    
+                    <div class="price-container">
+                        <span class="current-price">${data.price}</span>
+                        ${data.originalPrice ? `<span class="original-price">${data.originalPrice}</span>` : ''}
+                        ${data.discount ? `<span class="discount-badge">${data.discount}% OFF</span>` : ''}
+                    </div>
+                    
+                    ${data.rating ? `
+                    <div class="rating">
+                        <span class="stars">${'★'.repeat(Math.round(data.rating))}${'☆'.repeat(5-Math.round(data.rating))}</span>
+                        <span class="reviews">(${data.reviews} reviews)</span>
+                    </div>
+                    ` : ''}
+                    
+                    <a href="${data.url}" target="_blank" class="visit-btn">
+                        View on ${siteInfo[site].name}
+                    </a>
+                </div>
+            `;
+        }
+        
+        function getLogoPath(site) {
+            const logos = {
+                amazon: 'https://logo.clearbit.com/amazon.in?size=80',
+                flipkart: 'https://logo.clearbit.com/flipkart.com?size=80',
+                ebay: 'https://logo.clearbit.com/ebay.in?size=80',
+                meesho: 'https://logo.clearbit.com/meesho.com?size=80',
+                myntra: 'https://logo.clearbit.com/myntra.com?size=80'
+            };
+            return logos[site] || `https://logo.clearbit.com/${site}.com?size=80`;
+        }
+        
+        function showError(message) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = `
+                <div class="error">
+                    ${message}<br><br>
+                    <button class="retry-btn" onclick="window.location.reload()">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+
+        async function fetchProduct(site, product, retryCount = 0) {
+            try {
+                return await new Promise(async (resolve, reject) => {
+                    const delay = 800 + Math.random() * 200;
+                    
+                    setTimeout(async () => {
+                        try {
+                            if (Math.random() < 0.05) {
+                                throw new Error("Service timeout");
+                            }
+
+                            const lowerProduct = product.toLowerCase();
+                            let minPrice, maxPrice;
+                            let isPremiumProduct = false;
+                            let isAppleProduct = false;
+                            let isElectronics = false;
+
+                            // Apple Products
+                            if (lowerProduct.includes('iphone')) {
+                                isAppleProduct = true;
+                                isPremiumProduct = true;
+                                minPrice = 40000;
+                                
+                                if (lowerProduct.includes('pro max')) {
+                                    maxPrice = 159900;
+                                } else if (lowerProduct.includes('pro')) {
+                                    maxPrice = 149900;
+                                } else if (lowerProduct.includes('plus')) {
+                                    maxPrice = 89900;
+                                } else {
+                                    maxPrice = 89900;
+                                }
+                            } 
+                            // MacBooks
+                            else if (lowerProduct.includes('macbook pro')) {
+                                minPrice = 169900; maxPrice = 329900;
+                                isPremiumProduct = true;
+                            } else if (lowerProduct.includes('macbook air')) {
+                                                                minPrice = 99900; maxPrice = 129900;
+                                isPremiumProduct = true;
+                            }
+                            // Samsung Products
+                            else if (lowerProduct.includes('samsung galaxy s23 ultra')) {
+                                minPrice = 124999; maxPrice = 144999;
+                            } else if (lowerProduct.includes('samsung galaxy s23')) {
+                                minPrice = 84999; maxPrice = 94999;
+                            }
+                            // Electronics (for Croma)
+                            else if (lowerProduct.includes('tv') || 
+                                     lowerProduct.includes('refrigerator') || 
+                                     lowerProduct.includes('washing machine') ||
+                                     lowerProduct.includes('air conditioner') ||
+                                     lowerProduct.includes('laptop') ||
+                                     lowerProduct.includes('camera') ||
+                                     lowerProduct.includes('headphone')) {
+                                isElectronics = true;
+                                minPrice = 5000;
+                                maxPrice = 200000;
+                            }
+                            // Fashion and Accessories
+                            else if (lowerProduct.includes('earrings') || lowerProduct.includes('earring')) {
+                                minPrice = 49; maxPrice = 300;
+                            } else if (lowerProduct.includes('bedsheet') || lowerProduct.includes('bed sheet')) {
+                                minPrice = 199; maxPrice = 500;
+                            } else if (lowerProduct.includes('hot pack') || lowerProduct.includes('heating pad')) {
+                                minPrice = 99; maxPrice = 200;
+                            } else if (lowerProduct.includes('watch')) {
+                                minPrice = 299; maxPrice = 5000;
+                            } else if (lowerProduct.includes('shoes') || lowerProduct.includes('sneakers')) {
+                                minPrice = 299; maxPrice = 1000;
+                            } else if (lowerProduct.includes('book') || lowerProduct.includes('novel')) {
+                                minPrice = 49; maxPrice = 2000;
+                            } else if (lowerProduct.includes('t-shirt') || lowerProduct.includes('tshirt')) {
+                                minPrice = 99; maxPrice = 2000;
+                            } else if (lowerProduct.includes('jeans')) {
+                                minPrice = 399; maxPrice = 5000;
+                            } else if (lowerProduct.includes('smartphone')) {
+                                minPrice = 5000; maxPrice = 100000;
+                            } else {
+                                // Default range for unspecified products
+                                minPrice = 49; maxPrice = 10000;
+                            }
+
+                            // Platform adjustments
+                            const platformMultipliers = {
+                                amazon: isPremiumProduct ? 1.0 : 1.0,
+                                flipkart: isPremiumProduct ? 0.98 : 0.95,
+                                ebay: isPremiumProduct ? 1.05 : 1.1,
+                                meesho: isPremiumProduct ? 0.95 : 0.6,
+                                myntra: isPremiumProduct ? 1.0 : 0.8,
+                                croma: isElectronics ? 0.97 : 1.0  // Croma specializes in electronics
+                            };
+                            
+                            // Apply platform multipliers
+                            minPrice = Math.floor(minPrice * platformMultipliers[site]);
+                            maxPrice = Math.floor(maxPrice * platformMultipliers[site]);
+
+                            // Ensure Apple products never go below 40,000
+                            if (isAppleProduct) {
+                                minPrice = Math.max(40000, minPrice);
+                            }
+
+                            // Ensure fashion items have reasonable minimum prices
+                            if (lowerProduct.includes('earrings') || lowerProduct.includes('earring')) {
+                                minPrice = Math.max(49, minPrice);
+                                maxPrice = Math.min(3000, maxPrice);
+                            }
+
+                            let price = Math.floor(Math.random() * (maxPrice - minPrice) + minPrice);
+                            
+                            // Discount logic (smaller discounts for premium products)
+                            let maxDiscount = isPremiumProduct ? 10 : 30;
+                            let originalPrice, discount;
+                            if (Math.random() < 0.4) {
+                                discount = isPremiumProduct ? 
+                                    Math.floor(Math.random() * 5) + 5 : // 5-10% for premium
+                                    Math.floor(Math.random() * maxDiscount) + 5;
+                                originalPrice = price;
+                                price = Math.floor(price * (1 - discount/100));
+                            }
+                            
+                            // Generate rating
+                            let rating, reviews;
+                            if (Math.random() < 0.8) {
+                                rating = isPremiumProduct ? 
+                                    (Math.random() * 0.5 + 4.5).toFixed(1) : // 4.5-5.0
+                                    (Math.random() * 2 + 3).toFixed(1);       // 3-5
+                                reviews = isPremiumProduct ?
+                                    Math.floor(Math.random() * 5000) + 5000 : 
+                                    Math.floor(Math.random() * 10000) + 100;
+                            }
+                            
+                            // Format price
+                            const formatPrice = (amount) => '₹' + amount.toLocaleString('en-IN');
+                            
+                            // Product URLs
+                            const urls = {
+                                amazon: `https://www.amazon.in/s?k=${encodeURIComponent(product)}`,
+                                flipkart: `https://www.flipkart.com/search?q=${encodeURIComponent(product)}`,
+                                ebay: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(product)}`,
+                                meesho: isPremiumProduct ? 
+                                    'https://www.meesho.com/error' : 
+                                    `https://www.meesho.com/search?q=${encodeURIComponent(product)}`,
+                                myntra: isPremiumProduct ?
+                                    'https://www.myntra.com/error' : 
+                                    `https://www.myntra.com/${encodeURIComponent(product.toLowerCase().replace(/\s+/g, '-'))}`
+                               
+                            };
+
+                            // Handle Croma-specific cases
+                            let error = null;
+                            if (site === 'croma') {
+                                if (!isElectronics && !isAppleProduct) {
+                                    error = 'Not sold here (electronics only)';
+                                }
+                            } else if (isPremiumProduct && (site === 'meesho' || site === 'myntra')) {
+                                error = 'Not sold here';
+                            }
+
+                            resolve({
+                                name: `${product} ${getProductSuffix(site, isPremiumProduct, isAppleProduct)}`,
+                                price: formatPrice(price),
+                                priceValue: price,
+                                originalPrice: originalPrice ? formatPrice(originalPrice) : null,
+                                discount: discount || null,
+                                rating: rating || null,
+                                reviews: reviews || null,
+                                url: urls[site],
+                                error: error
+                            });
+                            
+                        } catch (error) {
+                            if (retryCount < maxRetries) {
+                                console.log(`Retrying ${site} (attempt ${retryCount + 1})`);
+                                const retryResult = await fetchProduct(site, product, retryCount + 1);
+                                resolve(retryResult);
+                            } else {
+                                reject(error);
+                            }
+                        }
+                    }, delay);
+                });
+            } catch (error) {
+                return {
+                    error: error.message,
+                    retry: () => fetchProduct(site, product)
+                };
+            }
+        }
+
+        function getProductSuffix(site, isPremium, isApple) {
+            if (isApple) {
+                const appleSuffixes = {
+                    amazon: ['Official Apple Seller', 'Prime Exclusive'],
+                    flipkart: ['Apple Authorised', 'Plus Exclusive'],
+                    ebay: ['Authentic Apple', 'Sealed Box'],
+                    meesho: ['Replica'],
+                    myntra: ['Not Available'],
+                    croma: ['Croma Assured']
+                };
+                return appleSuffixes[site][Math.floor(Math.random() * appleSuffixes[site].length)];
+            }
+
+            const regularSuffixes = {
+                amazon: ['Best Seller', 'Amazon\'s Choice'],
+                flipkart: ['Popular', 'Trending'],
+                ebay: ['Top Rated', 'Best Value'],
+                meesho: ['Value Deal', 'Budget Pick'],
+                myntra: ['Trending Now', 'Fashion Favorite'],
+                croma: ['Croma Assured', 'Trusted Brand']
+            };
+            return regularSuffixes[site][Math.floor(Math.random() * regularSuffixes[site].length)];
+        }
+
+        async function retryFetch(site) {
+            const product = document.getElementById('product-input').value.trim();
+            const resultsContainer = document.getElementById('results-container');
+            const cardElement = document.querySelector(`.result-card.${site}`);
+            
+            if (cardElement) {
+                cardElement.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <div class="loading-spinner"></div>
+                        <p>Retrying ${site}...</p>
+                    </div>
+                `;
+            }
+            
+            try {
+                const result = await fetchProduct(site, product);
+                const currentResults = {
+                    amazon: { error: "Not loaded" },
+                    flipkart: { error: "Not loaded" },
+                    ebay: { error: "Not loaded" },
+                    meesho: { error: "Not loaded" },
+                    myntra: { error: "Not loaded" },
+                    croma: { error: "Not loaded" }
+                };
+                
+                document.querySelectorAll('.result-card').forEach(card => {
+                    const siteClass = Array.from(card.classList)
+                        .find(cls => ['amazon', 'flipkart', 'ebay', 'meesho', 'myntra', 'croma'].includes(cls));
+                    if (siteClass) {
+                        currentResults[siteClass] = { 
+                            error: card.querySelector('.error')?.textContent || null,
+                            priceValue: card.dataset.priceValue || null
+                        };
+                    }
+                });
+                
+                currentResults[site] = result;
+                
+                const validResults = Object.values(currentResults).filter(r => !r.error && r.priceValue);
+                let bestDeal = null;
+                if (validResults.length > 0) {
+                    bestDeal = validResults.reduce((min, result) => 
+                        result.priceValue < min.priceValue ? result : min
+                    );
+                }
+                
+                if (cardElement) {
+                    cardElement.outerHTML = generateResultCard(site, result, bestDeal);
+                }
+                
+            } catch (error) {
+                if (cardElement) {
+                    cardElement.innerHTML = `
+                        <div class="error">
+                            Failed to load: ${error.message}<br>
+                            <button class="retry-btn" onclick="retryFetch('${site}')">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
